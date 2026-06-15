@@ -42,7 +42,9 @@ class AxonError(Exception):
 
 
 class AxonWS:
-    def __init__(self, host: str = DEFAULT_HOST, port: int = DEFAULT_PORT, timeout: float = 10.0):
+    def __init__(
+        self, host: str = DEFAULT_HOST, port: int = DEFAULT_PORT, timeout: float = 10.0
+    ):
         self.host = host
         self.port = port
         self.timeout = timeout
@@ -52,7 +54,9 @@ class AxonWS:
 
     # ---- connection -------------------------------------------------------
     def connect(self) -> "AxonWS":
-        self.sock = socket.create_connection((self.host, self.port), timeout=self.timeout)
+        self.sock = socket.create_connection(
+            (self.host, self.port), timeout=self.timeout
+        )
         self.sock.settimeout(self.timeout)
         key = base64.b64encode(os.urandom(16)).decode()
         req = (
@@ -88,7 +92,7 @@ class AxonWS:
     # ---- low-level IO -----------------------------------------------------
     def _read_until(self, marker: bytes) -> bytes:
         while marker not in self._buf:
-            chunk = self.sock.recv(4096)
+            chunk = self.sock.recv(4096)  # pyright: ignore[reportOptionalMemberAccess]
             if not chunk:
                 raise AxonError("connection closed during handshake")
             self._buf += chunk
@@ -98,7 +102,7 @@ class AxonWS:
 
     def _recv_exact(self, n: int) -> bytes:
         while len(self._buf) < n:
-            chunk = self.sock.recv(65536)
+            chunk = self.sock.recv(65536)  # pyright: ignore[reportOptionalMemberAccess]
             if not chunk:
                 raise AxonError("connection closed")
             self._buf += chunk
@@ -120,7 +124,7 @@ class AxonWS:
             header += struct.pack("!Q", length)
         header += mask
         masked = bytes(b ^ mask[i % 4] for i, b in enumerate(payload))
-        self.sock.sendall(bytes(header) + masked)
+        self.sock.sendall(bytes(header) + masked)  # pyright: ignore[reportOptionalMemberAccess]
 
     def _recv_frame(self) -> tuple[int, bytes]:
         """Return (opcode, payload). Transparently answers ping with pong."""
@@ -167,8 +171,14 @@ class AxonWS:
         raise AxonError(f"unexpected opcode {opcode}")
 
     # ---- JSON-RPC convenience --------------------------------------------
-    def rpc(self, method: str, params: dict | None = None, *, req_id: int | None = None,
-            collect_events: bool = False) -> dict:
+    def rpc(
+        self,
+        method: str,
+        params: dict | None = None,
+        *,
+        req_id: int | None = None,
+        collect_events: bool = False,
+    ) -> dict:
         """
         Send a request and return its matching response dict ({"id","result"} or
         {"id","error"}). Events and binary frames received in between are skipped
@@ -184,11 +194,11 @@ class AxonWS:
         events = []
         while True:
             kind, value = self.recv_message()
-            if kind == "text" and value.get("id") == req_id:
+            if kind == "text" and value.get("id") == req_id:  # pyright: ignore[reportAttributeAccessIssue]
                 if collect_events:
-                    value["_events"] = events
-                return value
-            if kind == "text" and "event" in value:
+                    value["_events"] = events  # pyright: ignore[reportIndexIssue]
+                return value  # pyright: ignore[reportReturnType]
+            if kind == "text" and "event" in value:  # pyright: ignore[reportOperatorIssue]
                 events.append(value)
             # binary frames belonging to other requests are ignored here
 
@@ -204,7 +214,7 @@ def _main(argv: list[str]) -> int:
             t0 = time.time()
             resp = ws.rpc("ping")
             print(json.dumps(resp))
-            print(f"# round-trip {1000*(time.time()-t0):.1f} ms", file=sys.stderr)
+            print(f"# round-trip {1000 * (time.time() - t0):.1f} ms", file=sys.stderr)
         elif cmd == "rpc":
             method = argv[1]
             params = json.loads(argv[2]) if len(argv) > 2 else None
