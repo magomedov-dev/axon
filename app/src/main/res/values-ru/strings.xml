@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Axon Agent</string>
+    <string name="service_label">Axon UI Automation</string>
+    <string name="service_description">Stateless-агент автоматизации UI. Предоставляет атомарные UI-примитивы через WebSocket + JSON-RPC на порту 9008. Состояние (ожидания, ретраи, навигация) — на стороне ПК-клиента.</string>
+
+    <string name="app_title">Axon</string>
+    <string name="app_subtitle">Агент автоматизации UI</string>
+
+    <string name="label_accessibility">Служба спец. возможностей</string>
+    <string name="label_server">WebSocket-сервер</string>
+
+    <string name="state_enabled">Включена</string>
+    <string name="state_disabled">Выключена</string>
+    <string name="state_idle">Ещё не запущен</string>
+    <string name="state_stopped">Остановлен</string>
+    <string name="fmt_server_listening">Слушает :9008 · подключено %1$d</string>
+
+    <string name="btn_open_settings">Открыть настройки спец. возможностей</string>
+    <string name="hint_connect">Подключение с ПК:\nadb forward tcp:9008 tcp:9008</string>
+
+    <string name="lang_ru">RU</string>
+    <string name="lang_en">ENG</string>
+
+    <string name="probe_hint">Тестовое поле (самопроверка nodeAction)</string>
+    <string name="probe_toast">Axon: тестовый тост</string>
+
+    <string name="notif_channel_name">Статус Axon</string>
+    <string name="notif_text">WebSocket-сервер на :9008</string>
+</resources>

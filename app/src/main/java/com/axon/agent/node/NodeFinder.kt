@@ -1,0 +1,39 @@
+package com.axon.agent.node
+
+import android.view.accessibility.AccessibilityNodeInfo
+
+/**
+ * Finds all nodes matching `by`=`value` by exact equality, via a depth-first walk
+ * from a fresh root. MUST run on the TreeDispatcher thread. Returns live nodes
+ * (the caller acts on one and is responsible for recycling them).
+ *
+ * Exact match is used uniformly across all selectors for predictable semantics
+ * (unlike findAccessibilityNodeInfosByText, which is substring + case-insensitive
+ * and also matches content descriptions).
+ */
+object NodeFinder {
+
+    fun findAll(root: AccessibilityNodeInfo, by: String, value: String): List<AccessibilityNodeInfo> {
+        val out = ArrayList<AccessibilityNodeInfo>()
+
+        fun visit(node: AccessibilityNodeInfo) {
+            if (matches(node, by, value)) out.add(node)
+            val count = node.childCount
+            for (i in 0 until count) {
+                val child = node.getChild(i) ?: continue
+                visit(child)
+            }
+        }
+
+        visit(root)
+        return out
+    }
+
+    private fun matches(node: AccessibilityNodeInfo, by: String, value: String): Boolean = when (by) {
+        "resourceId" -> node.viewIdResourceName == value
+        "text" -> node.text?.toString() == value
+        "class" -> node.className?.toString() == value
+        "contentDesc" -> node.contentDescription?.toString() == value
+        else -> false
+    }
+}

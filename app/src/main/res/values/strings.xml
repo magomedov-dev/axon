@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Axon Agent</string>
+    <string name="service_label">Axon UI Automation</string>
+    <string name="service_description">Stateless UI automation agent. Exposes atomic UI primitives over a WebSocket + JSON-RPC server on port 9008. State (waits, retries, navigation) lives on the PC client.</string>
+
+    <string name="app_title">Axon</string>
+    <string name="app_subtitle">UI Automation Agent</string>
+
+    <string name="label_accessibility">Accessibility service</string>
+    <string name="label_server">WebSocket server</string>
+
+    <string name="state_enabled">Enabled</string>
+    <string name="state_disabled">Disabled</string>
+    <string name="state_idle">Not running yet</string>
+    <string name="state_stopped">Stopped</string>
+    <string name="fmt_server_listening">Listening on :9008 · %1$d connected</string>
+
+    <string name="btn_open_settings">Open Accessibility settings</string>
+    <string name="hint_connect">Connect from the PC:\nadb forward tcp:9008 tcp:9008</string>
+
+    <string name="lang_ru">RU</string>
+    <string name="lang_en">ENG</string>
+
+    <string name="probe_hint">Probe field (nodeAction self-test)</string>
+    <string name="probe_toast">Axon: probe toast</string>
+
+    <string name="notif_channel_name">Axon status</string>
+    <string name="notif_text">WebSocket server on :9008</string>
+</resources>
