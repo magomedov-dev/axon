@@ -1,0 +1,15 @@
+# Project-local toolchain (JDK, Gradle, Android SDK) installed by scripts/setup.sh
+/.tooling/
+/.tooling-setup.log
+
+# Gradle / Android build output
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+.kotlin/
