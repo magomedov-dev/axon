@@ -141,7 +141,7 @@ scripts/test.sh --e2e stage2 # один E2E-этап
 | `gesture` | ✅ |
 | `nodeAction` | ✅ |
 | `globalAction` | ✅ |
-| `screenshot` | 🔜 |
+| `screenshot` | ✅ |
 | `setEventStream` + события | 🔜 |
 
 Поэтапный план и критерии готовности — в

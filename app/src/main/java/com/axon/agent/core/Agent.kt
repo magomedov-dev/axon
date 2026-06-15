@@ -1,6 +1,7 @@
 package com.axon.agent.core
 
 import android.accessibilityservice.GestureDescription
+import android.graphics.Bitmap
 import android.view.accessibility.AccessibilityNodeInfo
 import kotlinx.coroutines.CoroutineScope
 
@@ -39,4 +40,11 @@ interface Agent {
      * result. Satisfied by AccessibilityService.performGlobalAction on the device.
      */
     fun performGlobalAction(action: Int): Boolean
+
+    /**
+     * Capture the screen via takeScreenshot() and return a software Bitmap.
+     * Throws [com.axon.agent.rpc.RpcException] on failure (e.g. rate-limited).
+     * The caller owns the bitmap and must recycle it.
+     */
+    suspend fun captureScreenshot(): Bitmap
 }

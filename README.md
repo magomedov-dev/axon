@@ -138,7 +138,7 @@ scripts/test.sh --e2e stage2 # one E2E stage
 | `gesture` | ✅ |
 | `nodeAction` | ✅ |
 | `globalAction` | ✅ |
-| `screenshot` | 🔜 |
+| `screenshot` | ✅ |
 | `setEventStream` + events | 🔜 |
 
 See [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) for the staged roadmap and

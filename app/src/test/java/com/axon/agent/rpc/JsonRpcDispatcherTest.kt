@@ -26,7 +26,7 @@ class JsonRpcDispatcherTest {
     private val ctx = RpcContext(ConnectionState(1, NoopSender), FakeAgent())
 
     private suspend fun dispatch(raw: String): JsonObject =
-        RpcMessages.json.parseToJsonElement(dispatcher.dispatch(raw, ctx)).jsonObject
+        RpcMessages.json.parseToJsonElement(dispatcher.dispatch(raw, ctx)!!).jsonObject
 
     @Test
     fun ping_returnsPongAndEchoesId() = runTest {
@@ -71,7 +71,7 @@ class JsonRpcDispatcherTest {
                 throw RpcException(ErrorCodes.INVALID_PARAMS, "bad params")
         })))
         val resp = RpcMessages.json
-            .parseToJsonElement(d.dispatch("""{"id":9,"method":"boom"}""", ctx)).jsonObject
+            .parseToJsonElement(d.dispatch("""{"id":9,"method":"boom"}""", ctx)!!).jsonObject
         val err = resp["error"]!!.jsonObject
         assertEquals(ErrorCodes.INVALID_PARAMS, err["code"]!!.jsonPrimitive.content)
         assertEquals("bad params", err["message"]!!.jsonPrimitive.content)
@@ -91,6 +91,7 @@ class JsonRpcDispatcherTest {
         override fun rootNode() = null
         override suspend fun performGesture(gesture: android.accessibilityservice.GestureDescription) = false
         override fun performGlobalAction(action: Int) = false
+        override suspend fun captureScreenshot(): android.graphics.Bitmap = error("no screenshot in test")
         init { assertNotNull(scope) }
     }
 }

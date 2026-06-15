@@ -51,7 +51,7 @@ Three kinds of messages share the one socket:
 |------|-----------|---------------------|
 | **Response** | device → PC | text frame, JSON with an `id` and a `result` or `error` |
 | **Event** (server-push) 🔜 | device → PC | text frame, JSON with an `event` field and **no** `id` |
-| **Binary frame** (screenshots) 🔜 | device → PC | binary frame: `[4-byte id, uint32 big-endian][payload bytes]` |
+| **Binary frame** (screenshots) | device → PC | binary frame: `[4-byte id, uint32 big-endian][payload bytes]` |
 
 ### Conventions
 
@@ -277,12 +277,35 @@ System-level actions via `performGlobalAction`. One key→constant table.
 
 ---
 
+### `screenshot` ✅
+
+Capture the screen via `takeScreenshot()`. The reply is **two messages**: JSON
+metadata, immediately followed by the image as a binary frame. They are emitted
+atomically (nothing interleaves between them).
+
+- **params:**
+  - `format` *(optional)* — `jpeg` (default) or `png`.
+  - `quality` *(int 0..100, optional)* — JPEG quality, default 80 (ignored for PNG).
+- **result (message 1, JSON):**
+  `{ "screen": int, "format": string, "width": int, "height": int, "bytes": int }`
+- **message 2 (binary frame):** `[4-byte id, uint32 big-endian][image bytes]`, where
+  `id` is the request id and the byte count equals `bytes` from the metadata.
+- **errors:** `INVALID_PARAMS` (bad `format`/`quality`); `INTERNAL` if the capture
+  fails (e.g. the platform rate-limits `takeScreenshot`). On error, no binary frame
+  is sent.
+
+```json
+→ { "id": 7, "method": "screenshot", "params": { "format": "jpeg", "quality": 80 } }
+← { "id": 7, "result": { "screen": 0, "format": "jpeg", "width": 1080, "height": 2340, "bytes": 142233 } }
+← <binary frame: 00 00 00 07  FF D8 FF …>
+```
+
+---
+
 ## 7. Planned methods 🔜
 
 Reserved and documented here for completeness; not yet implemented.
 
-- **`screenshot`** — JSON metadata then a binary frame
-  (`{ id, result: { screen, format, width, height, bytes } }` + `[4-byte id][image]`).
 - **`setEventStream`** — `{ enabled: bool }` toggles server-push for this connection.
 
 ### Planned server-push events 🔜

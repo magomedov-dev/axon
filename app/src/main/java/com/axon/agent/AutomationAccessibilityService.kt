@@ -3,7 +3,9 @@ package com.axon.agent
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.content.Intent
+import android.graphics.Bitmap
 import android.util.Log
+import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.axon.agent.core.Agent
@@ -14,7 +16,10 @@ import com.axon.agent.handlers.GestureHandler
 import com.axon.agent.handlers.GlobalActionHandler
 import com.axon.agent.handlers.NodeActionHandler
 import com.axon.agent.handlers.PingHandler
+import com.axon.agent.handlers.ScreenshotHandler
+import com.axon.agent.rpc.ErrorCodes
 import com.axon.agent.rpc.JsonRpcDispatcher
+import com.axon.agent.rpc.RpcException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import com.axon.agent.rpc.MethodRouter
 import com.axon.agent.rpc.RpcContext
@@ -54,6 +59,41 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
             if (!dispatched && cont.isActive) cont.resumeWith(Result.success(false))
         }
 
+    override suspend fun captureScreenshot(): Bitmap =
+        suspendCancellableCoroutine { cont ->
+            takeScreenshot(
+                Display.DEFAULT_DISPLAY,
+                mainExecutor,
+                object : TakeScreenshotCallback {
+                    override fun onSuccess(screenshot: ScreenshotResult) {
+                        val buffer = screenshot.hardwareBuffer
+                        try {
+                            val hw = Bitmap.wrapHardwareBuffer(buffer, screenshot.colorSpace)
+                            val software = hw?.copy(Bitmap.Config.ARGB_8888, false)
+                            hw?.recycle()
+                            if (software != null) {
+                                cont.resumeWith(Result.success(software))
+                            } else {
+                                cont.resumeWith(
+                                    Result.failure(RpcException(ErrorCodes.INTERNAL, "failed to decode screenshot buffer"))
+                                )
+                            }
+                        } catch (e: Throwable) {
+                            cont.resumeWith(Result.failure(e))
+                        } finally {
+                            buffer.close()
+                        }
+                    }
+
+                    override fun onFailure(errorCode: Int) {
+                        cont.resumeWith(
+                            Result.failure(RpcException(ErrorCodes.INTERNAL, "takeScreenshot failed (code $errorCode)"))
+                        )
+                    }
+                },
+            )
+        }
+
     private val dispatcher: JsonRpcDispatcher by lazy {
         JsonRpcDispatcher(
             MethodRouter(
@@ -63,6 +103,7 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
                     "gesture" to GestureHandler,
                     "nodeAction" to NodeActionHandler,
                     "globalAction" to GlobalActionHandler,
+                    "screenshot" to ScreenshotHandler,
                 )
             )
         )
