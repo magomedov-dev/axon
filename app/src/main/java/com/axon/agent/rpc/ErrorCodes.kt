@@ -20,4 +20,7 @@ object ErrorCodes {
     const val ACTION_NOT_SUPPORTED = "ACTION_NOT_SUPPORTED"
     const val NOT_EDITABLE = "NOT_EDITABLE"
     const val STALE = "STALE"
+
+    // gestures
+    const val GESTURE_FAILED = "GESTURE_FAILED"
 }

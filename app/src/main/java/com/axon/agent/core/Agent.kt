@@ -1,5 +1,6 @@
 package com.axon.agent.core
 
+import android.accessibilityservice.GestureDescription
 import android.view.accessibility.AccessibilityNodeInfo
 import kotlinx.coroutines.CoroutineScope
 
@@ -26,4 +27,10 @@ interface Agent {
      * foreground window). Never cached. Call on the [tree] thread.
      */
     fun rootNode(): AccessibilityNodeInfo?
+
+    /**
+     * Dispatch a gesture and suspend until it finishes. Returns true on
+     * onCompleted, false if it was cancelled or could not be dispatched.
+     */
+    suspend fun performGesture(gesture: GestureDescription): Boolean
 }

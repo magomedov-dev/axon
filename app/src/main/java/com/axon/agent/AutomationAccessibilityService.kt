@@ -1,6 +1,7 @@
 package com.axon.agent
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.GestureDescription
 import android.content.Intent
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
@@ -9,8 +10,10 @@ import com.axon.agent.core.Agent
 import com.axon.agent.core.ScreenCounter
 import com.axon.agent.core.TreeDispatcher
 import com.axon.agent.handlers.DumpHandler
+import com.axon.agent.handlers.GestureHandler
 import com.axon.agent.handlers.PingHandler
 import com.axon.agent.rpc.JsonRpcDispatcher
+import kotlinx.coroutines.suspendCancellableCoroutine
 import com.axon.agent.rpc.MethodRouter
 import com.axon.agent.rpc.RpcContext
 import com.axon.agent.server.WsServer
@@ -33,12 +36,29 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
 
     override fun rootNode(): AccessibilityNodeInfo? = rootInActiveWindow
 
+    override suspend fun performGesture(gesture: GestureDescription): Boolean =
+        suspendCancellableCoroutine { cont ->
+            val callback = object : GestureResultCallback() {
+                override fun onCompleted(g: GestureDescription?) {
+                    if (cont.isActive) cont.resumeWith(Result.success(true))
+                }
+
+                override fun onCancelled(g: GestureDescription?) {
+                    if (cont.isActive) cont.resumeWith(Result.success(false))
+                }
+            }
+            // null handler -> callbacks arrive on the main thread.
+            val dispatched = dispatchGesture(gesture, callback, null)
+            if (!dispatched && cont.isActive) cont.resumeWith(Result.success(false))
+        }
+
     private val dispatcher: JsonRpcDispatcher by lazy {
         JsonRpcDispatcher(
             MethodRouter(
                 mapOf(
                     "ping" to PingHandler,
                     "dumpHierarchy" to DumpHandler,
+                    "gesture" to GestureHandler,
                 )
             )
         )

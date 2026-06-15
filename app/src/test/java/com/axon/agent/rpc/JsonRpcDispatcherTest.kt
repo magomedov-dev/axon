@@ -89,6 +89,7 @@ class JsonRpcDispatcherTest {
         override val tree: TreeDispatcher get() = error("tree must not be used in this test")
         override val screen = com.axon.agent.core.ScreenCounter()
         override fun rootNode() = null
+        override suspend fun performGesture(gesture: android.accessibilityservice.GestureDescription) = false
         init { assertNotNull(scope) }
     }
 }
