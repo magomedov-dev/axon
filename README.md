@@ -110,7 +110,9 @@ scripts/device.sh forward    # adb forward tcp:9008
 scripts/device.sh status     # enabled services + foreground package
 ```
 
-…or open the **Axon** app and tap *Open Accessibility settings*.
+…or open the **Axon** app and tap *Open Accessibility settings*. The app screen is
+a live console: service/server indicators, a live connection count, a server
+on/off switch, and an RU/EN language toggle.
 
 ## Connect from the PC
 

@@ -3,6 +3,8 @@ package com.axon.agent.ui
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -25,6 +27,15 @@ class StatusActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityStatusBinding
 
+    private val handler = Handler(Looper.getMainLooper())
+    private var updatingSwitch = false
+    private val tick = object : Runnable {
+        override fun run() {
+            refreshStatus()
+            handler.postDelayed(this, REFRESH_INTERVAL_MS)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityStatusBinding.inflate(layoutInflater)
@@ -40,12 +51,24 @@ class StatusActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.probe_toast, Toast.LENGTH_SHORT).show()
         }
 
+        // Start/stop the WebSocket server. Ignore programmatic state syncs.
+        binding.swServer.setOnCheckedChangeListener { _, isChecked ->
+            if (updatingSwitch) return@setOnCheckedChangeListener
+            AutomationAccessibilityService.instance?.setServerEnabled(isChecked)
+            refreshStatus()
+        }
+
         setupLanguageToggle()
     }
 
     override fun onResume() {
         super.onResume()
-        refreshStatus()
+        handler.post(tick) // refresh now and keep the connection count live
+    }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(tick)
     }
 
     // ---- language ---------------------------------------------------------
@@ -95,6 +118,18 @@ class StatusActivity : AppCompatActivity() {
             )
         }
         tintDot(binding.dotServer, on = serverRunning)
+
+        // The server can only be toggled while the accessibility service is bound.
+        binding.swServer.isEnabled = enabled
+        if (binding.swServer.isChecked != serverRunning) {
+            updatingSwitch = true
+            binding.swServer.isChecked = serverRunning
+            updatingSwitch = false
+        }
+    }
+
+    companion object {
+        private const val REFRESH_INTERVAL_MS = 1000L
     }
 
     private fun tintDot(view: android.view.View, on: Boolean) {

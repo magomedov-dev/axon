@@ -155,6 +155,13 @@
                         android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:textColor="?attr/colorOnSurfaceVariant" />
                 </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swServer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:contentDescription="@string/label_server" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

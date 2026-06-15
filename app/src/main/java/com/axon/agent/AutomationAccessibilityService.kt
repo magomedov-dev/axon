@@ -30,6 +30,7 @@ import com.axon.agent.rpc.RpcException
 import com.axon.agent.ui.StatusActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.concurrent.Executors
 import com.axon.agent.rpc.MethodRouter
 import com.axon.agent.rpc.RpcContext
 import com.axon.agent.server.WsServer
@@ -37,7 +38,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlin.concurrent.thread
 
 /**
  * Entry point and single owner of the runtime: the coroutine [scope], the
@@ -119,8 +119,16 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
         )
     }
 
+    @Volatile
     private var server: WsServer? = null
     private var eventHub: AccessibilityEventHub? = null
+
+    // Server start/stop are serialized on one thread so a stop fully completes
+    // (port released) before any restart — otherwise a quick toggle off→on would
+    // leave a dying server racing a new one on the same port.
+    private val serverLifecycle = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "axon-ws-lifecycle")
+    }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -179,7 +187,11 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
         startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
     }
 
-    private fun startServer() {
+    private fun startServer() = serverLifecycle.execute { doStartServer() }
+
+    private fun stopServer() = serverLifecycle.execute { doStopServer() }
+
+    private fun doStartServer() {
         if (server != null) return
         val s = WsServer(
             port = PORT,
@@ -189,15 +201,15 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
             process = { message, state -> dispatcher.dispatch(message, RpcContext(state, this)) },
         )
         runCatching { s.start() }
-            .onSuccess { server = s }
+            .onSuccess { server = s; Log.i(TAG, "WS server started") }
             .onFailure { Log.e(TAG, "failed to start WS server", it) }
     }
 
-    private fun stopServer() {
+    private fun doStopServer() {
         val s = server ?: return
         server = null
-        // stop() blocks; never run it on the main thread.
-        thread(name = "axon-ws-stop") { runCatching { s.stop(STOP_TIMEOUT_MS) } }
+        runCatching { s.stop(STOP_TIMEOUT_MS) } // blocking, but on the lifecycle thread
+        Log.i(TAG, "WS server stopped")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -237,6 +249,7 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
         instance = null
         eventHub = null
         stopServer()
+        serverLifecycle.shutdown() // lets the queued stop run, then terminates
         scope.cancel()
         runCatching { tree.close() }
         runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
@@ -245,6 +258,11 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
     // ---- status surface for the UI ---------------------------------------
     fun isServerRunning(): Boolean = server?.started == true
     fun connectionCount(): Int = server?.connectionCount() ?: 0
+
+    /** Start/stop the WebSocket server from the status UI toggle. */
+    fun setServerEnabled(enabled: Boolean) {
+        if (enabled) startServer() else stopServer()
+    }
 
     companion object {
         const val TAG = "AxonService"
