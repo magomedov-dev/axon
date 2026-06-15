@@ -1,5 +1,7 @@
 # Axon
 
+**English** · [Русский](README.ru.md)
+
 A minimal, fast, **stateless** UI-automation agent for Android — a lightweight
 alternative to UIAutomator2, built on `AccessibilityService` with a WebSocket +
 JSON-RPC transport. Designed for driving a large fleet of phones connected to a

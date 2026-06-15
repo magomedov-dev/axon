@@ -1,5 +1,7 @@
 # Axon Protocol Reference
 
+**English** · [Русский](PROTOCOL.ru.md)
+
 JSON-RPC over a single WebSocket. This document is the source of truth for the
 wire format between the PC client and the on-device agent (APK). It is kept in
 sync with the implementation stage by stage.
