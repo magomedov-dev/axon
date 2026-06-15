@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
@@ -31,6 +32,12 @@ class StatusActivity : AppCompatActivity() {
 
         binding.btnOpenSettings.setOnClickListener {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
+
+        // Tapping the logo shows a toast — a deterministic source for the
+        // `toast` server-push event (used by the Stage 7 E2E test).
+        binding.imgLogo.setOnClickListener {
+            Toast.makeText(this, R.string.probe_toast, Toast.LENGTH_SHORT).show()
         }
 
         setupLanguageToggle()

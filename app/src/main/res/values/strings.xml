@@ -22,4 +22,5 @@
     <string name="lang_en">ENG</string>
 
     <string name="probe_hint">Probe field (nodeAction self-test)</string>
+    <string name="probe_toast">Axon: probe toast</string>
 </resources>

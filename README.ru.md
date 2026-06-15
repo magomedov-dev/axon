@@ -142,7 +142,7 @@ scripts/test.sh --e2e stage2 # один E2E-этап
 | `nodeAction` | ✅ |
 | `globalAction` | ✅ |
 | `screenshot` | ✅ |
-| `setEventStream` + события | 🔜 |
+| `setEventStream` + события | ✅ |
 
 Поэтапный план и критерии готовности — в
 [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).

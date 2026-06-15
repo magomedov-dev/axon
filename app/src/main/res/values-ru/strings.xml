@@ -22,4 +22,5 @@
     <string name="lang_en">ENG</string>
 
     <string name="probe_hint">Тестовое поле (самопроверка nodeAction)</string>
+    <string name="probe_toast">Axon: тестовый тост</string>
 </resources>

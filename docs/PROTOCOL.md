@@ -50,7 +50,7 @@ Three kinds of messages share the one socket:
 | Kind | Direction | How to recognize it |
 |------|-----------|---------------------|
 | **Response** | device → PC | text frame, JSON with an `id` and a `result` or `error` |
-| **Event** (server-push) 🔜 | device → PC | text frame, JSON with an `event` field and **no** `id` |
+| **Event** (server-push) | device → PC | text frame, JSON with an `event` field and **no** `id` |
 | **Binary frame** (screenshots) | device → PC | binary frame: `[4-byte id, uint32 big-endian][payload bytes]` |
 
 ### Conventions
@@ -302,16 +302,45 @@ atomically (nothing interleaves between them).
 
 ---
 
-## 7. Planned methods 🔜
+### `setEventStream` ✅
 
-Reserved and documented here for completeness; not yet implemented.
+The per-connection tap for server-push events (section 7). The boolean flag is the
+only subscription state the device keeps.
 
-- **`setEventStream`** — `{ enabled: bool }` toggles server-push for this connection.
+- **params:** `enabled` *(bool, required)*.
+- **result:** `{ "success": true, "enabled": <bool> }`.
+- **errors:** `INVALID_PARAMS` if `enabled` is missing/not a boolean.
 
-### Planned server-push events 🔜
+```json
+→ { "id": 8, "method": "setEventStream", "params": { "enabled": true } }
+← { "id": 8, "result": { "success": true, "enabled": true } }
+```
 
-- `{ "event": "screenChanged", "screen": int, "package": string }`
-- `{ "event": "toast", "text": string, "package": string }`
+---
+
+## 7. Server-push events ✅
+
+Events have an `event` field and **no** `id`. They are delivered only to
+connections that turned them on with [`setEventStream`](#seteventstream-).
+
+### `screenChanged`
+
+`{ "event": "screenChanged", "screen": int, "package": string }`
+
+- Fired only by `TYPE_WINDOW_STATE_CHANGED` / `TYPE_WINDOW_CONTENT_CHANGED`
+  (scroll/focus/selection noise is ignored).
+- **Trailing-debounced** (~80 ms): a burst collapses into a single event once the
+  stream goes quiet.
+- **Deduplicated:** `screen` advances (and an event fires) only on a *real* change
+  — a window state change or a new package/window. Pure content churn on the same
+  screen (clocks, tickers) is suppressed.
+
+### `toast`
+
+`{ "event": "toast", "text": string, "package": string }`
+
+- Sourced from `TYPE_NOTIFICATION_STATE_CHANGED`; emitted immediately (no debounce).
+- Useful for catching form feedback ("Wrong password", etc.).
 
 ---
 

@@ -348,7 +348,7 @@ E2E `stage6_screenshot` (9 проверок, JPEG+PNG).
 
 ---
 
-## Этап 7 — События: `onAccessibilityEvent`, debounce, `setEventStream` ⬜
+## Этап 7 — События: `onAccessibilityEvent`, debounce, `setEventStream` ✅
 
 **Цель:** server-push события `screenChanged` и `toast`, дебаунс, дедуп по `screen`,
 кран подписки на соединение.
@@ -363,13 +363,17 @@ E2E `stage6_screenshot` (9 проверок, JPEG+PNG).
   флаг (единственное допустимое состояние подписки).
 - Связать `AutomationAccessibilityService.onAccessibilityEvent` → Hub.
 
-**Готово:** при смене экрана подписчик получает `screenChanged{screen,package}`
-один раз после затихания; повторный тот же `screen` не шлётся; тост даёт
-`toast{text,package}`; без `setEventStream(true)` событий нет; скролл/фокус не
-порождают `screenChanged`.
+- `events/EventMessages.kt` (чистый билдер), `events/AccessibilityEventHub.kt`
+  (debounce + дедуп по сигнатуре `package#windowId`, логика на одном диспетчере →
+  юнит-тест виртуальным временем). Логотип сделан кликабельным → Toast для E2E.
 
-**Проверка вручную:** включить `setEventStream`, переключать экраны/листать,
-наблюдать единичные события; спровоцировать тост (например, ошибку формы).
+**Готово ✅:** подписчик получает `screenChanged{screen,package}` один раз после
+затихания (~80 мс); повтор того же экрана подавляется; `toast{text,package}` сразу;
+без `setEventStream(true)` — тишина; скролл/фокус игнорируются. Проверено: 6
+unit-тестов `AccessibilityEventHubTest` (debounce/дедуп/тосты) + E2E `stage7_events`
+(подписка, toast, screenChanged, молчание неподписанного).
+
+**Проверка:** `scripts/test.sh`.
 
 **Зависимости:** Этап 1, Этап 2 (ScreenCounter, package).
 

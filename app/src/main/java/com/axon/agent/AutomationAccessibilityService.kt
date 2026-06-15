@@ -11,7 +11,9 @@ import android.view.accessibility.AccessibilityNodeInfo
 import com.axon.agent.core.Agent
 import com.axon.agent.core.ScreenCounter
 import com.axon.agent.core.TreeDispatcher
+import com.axon.agent.events.AccessibilityEventHub
 import com.axon.agent.handlers.DumpHandler
+import com.axon.agent.handlers.EventStreamHandler
 import com.axon.agent.handlers.GestureHandler
 import com.axon.agent.handlers.GlobalActionHandler
 import com.axon.agent.handlers.NodeActionHandler
@@ -20,6 +22,7 @@ import com.axon.agent.handlers.ScreenshotHandler
 import com.axon.agent.rpc.ErrorCodes
 import com.axon.agent.rpc.JsonRpcDispatcher
 import com.axon.agent.rpc.RpcException
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import com.axon.agent.rpc.MethodRouter
 import com.axon.agent.rpc.RpcContext
@@ -104,18 +107,39 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
                     "nodeAction" to NodeActionHandler,
                     "globalAction" to GlobalActionHandler,
                     "screenshot" to ScreenshotHandler,
+                    "setEventStream" to EventStreamHandler,
                 )
             )
         )
     }
 
     private var server: WsServer? = null
+    private var eventHub: AccessibilityEventHub? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
         startServer()
+        eventHub = AccessibilityEventHub(
+            scope = scope,
+            dispatcher = Dispatchers.Main,
+            screen = screen,
+            debounceMs = EVENT_DEBOUNCE_MS,
+            broadcast = ::broadcastEvent,
+        )
         Log.i(TAG, "onServiceConnected: service up, server starting")
+    }
+
+    /** Fan a server-push event out to subscribed connections (off the main thread). */
+    private fun broadcastEvent(json: String) {
+        val srv = server ?: return
+        scope.launch {
+            for (connection in srv.connections()) {
+                if (connection.eventStream) {
+                    runCatching { connection.writer.sendText(json) }
+                }
+            }
+        }
     }
 
     private fun startServer() {
@@ -140,8 +164,21 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // Stage 7: screenChanged/toast with debounce. No-op for now.
+        val e = event ?: return
+        val hub = eventHub ?: return
+        when (e.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ->
+                hub.onScreenEvent(stateChange = true, e.packageName?.toString(), e.windowId)
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ->
+                hub.onScreenEvent(stateChange = false, e.packageName?.toString(), e.windowId)
+            AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED ->
+                hub.onToast(joinText(e.text), e.packageName?.toString())
+            // everything else (scroll/focus/selection) is noise — ignore.
+        }
     }
+
+    private fun joinText(text: List<CharSequence>?): String? =
+        text?.joinToString(" ") { it.toString() }?.trim()?.takeIf { it.isNotEmpty() }
 
     override fun onInterrupt() {
         Log.w(TAG, "onInterrupt")
@@ -161,6 +198,7 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
 
     private fun teardown() {
         instance = null
+        eventHub = null
         stopServer()
         scope.cancel()
         runCatching { tree.close() }
@@ -174,6 +212,7 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
         const val TAG = "AxonService"
         const val PORT = 9008
         private const val STOP_TIMEOUT_MS = 500
+        private const val EVENT_DEBOUNCE_MS = 80L
 
         /** Non-null only while the service is connected. Read by the status UI. */
         @Volatile
