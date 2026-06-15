@@ -4,8 +4,11 @@ import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
 import com.axon.agent.core.Agent
+import com.axon.agent.core.ScreenCounter
 import com.axon.agent.core.TreeDispatcher
+import com.axon.agent.handlers.DumpHandler
 import com.axon.agent.handlers.PingHandler
 import com.axon.agent.rpc.JsonRpcDispatcher
 import com.axon.agent.rpc.MethodRouter
@@ -26,12 +29,16 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
 
     override val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     override val tree: TreeDispatcher = TreeDispatcher()
+    override val screen: ScreenCounter = ScreenCounter()
+
+    override fun rootNode(): AccessibilityNodeInfo? = rootInActiveWindow
 
     private val dispatcher: JsonRpcDispatcher by lazy {
         JsonRpcDispatcher(
             MethodRouter(
                 mapOf(
                     "ping" to PingHandler,
+                    "dumpHierarchy" to DumpHandler,
                 )
             )
         )

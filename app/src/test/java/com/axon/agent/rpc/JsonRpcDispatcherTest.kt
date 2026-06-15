@@ -87,6 +87,8 @@ class JsonRpcDispatcherTest {
     private class FakeAgent : Agent {
         override val scope = CoroutineScope(Job())
         override val tree: TreeDispatcher get() = error("tree must not be used in this test")
+        override val screen = com.axon.agent.core.ScreenCounter()
+        override fun rootNode() = null
         init { assertNotNull(scope) }
     }
 }
