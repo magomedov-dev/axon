@@ -71,15 +71,23 @@ class StatusActivity : AppCompatActivity() {
 
     // ---- status -----------------------------------------------------------
     private fun refreshStatus() {
-        val enabled = AutomationAccessibilityService.instance != null
+        val service = AutomationAccessibilityService.instance
+        val enabled = service != null
         binding.txtServiceState.setText(
             if (enabled) R.string.state_enabled else R.string.state_disabled
         )
         tintDot(binding.dotService, on = enabled)
 
-        // WebSocket server status arrives in Stage 1; idle for now.
-        binding.txtServerState.setText(R.string.state_idle)
-        tintDot(binding.dotServer, on = false)
+        val serverRunning = service?.isServerRunning() == true
+        if (serverRunning) {
+            binding.txtServerState.text =
+                getString(R.string.fmt_server_listening, service.connectionCount())
+        } else {
+            binding.txtServerState.setText(
+                if (enabled) R.string.state_stopped else R.string.state_idle
+            )
+        }
+        tintDot(binding.dotServer, on = serverRunning)
     }
 
     private fun tintDot(view: android.view.View, on: Boolean) {

@@ -12,6 +12,8 @@
     <string name="state_enabled">Включена</string>
     <string name="state_disabled">Выключена</string>
     <string name="state_idle">Ещё не запущен</string>
+    <string name="state_stopped">Остановлен</string>
+    <string name="fmt_server_listening">Слушает :9008 · подключено %1$d</string>
 
     <string name="btn_open_settings">Открыть настройки спец. возможностей</string>
     <string name="hint_connect">Подключение с ПК:\nadb forward tcp:9008 tcp:9008</string>

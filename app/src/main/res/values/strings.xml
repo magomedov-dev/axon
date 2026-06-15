@@ -12,6 +12,8 @@
     <string name="state_enabled">Enabled</string>
     <string name="state_disabled">Disabled</string>
     <string name="state_idle">Not running yet</string>
+    <string name="state_stopped">Stopped</string>
+    <string name="fmt_server_listening">Listening on :9008 · %1$d connected</string>
 
     <string name="btn_open_settings">Open Accessibility settings</string>
     <string name="hint_connect">Connect from the PC:\nadb forward tcp:9008 tcp:9008</string>

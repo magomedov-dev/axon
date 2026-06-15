@@ -155,7 +155,7 @@ arm64-v8a. На нём уже включён сторонний accessibility-а
 
 ---
 
-## Этап 1 — WebSocket-сервер + каркас JSON-RPC + сериализация записи ⬜
+## Этап 1 — WebSocket-сервер + каркас JSON-RPC + сериализация записи ✅
 
 **Цель:** сервис поднимает WS-сервер на `0.0.0.0:9008`, принимает соединения,
 парсит JSON-RPC, отвечает единым форматом. Один метод-пустышка `ping` доказывает
@@ -183,12 +183,18 @@ arm64-v8a. На нём уже включён сторонний accessibility-а
 - Интеграция в `AutomationAccessibilityService`: старт сервера в
   `onServiceConnected`, стоп + отмена scope в `onDestroy/onUnbind`.
 
-**Готово:** с ПК через `adb forward tcp:9008 tcp:9008` подключение по WS работает;
-`{"id":1,"method":"ping"}` → `{"id":1,"result":{"pong":true,"ts":...}}`; кривой
-JSON → `PARSE_ERROR`; неизвестный метод → `METHOD_NOT_FOUND`.
+- Доп. швы для тестируемости/развязки: `server/Sender.kt` (абстракция транспорта
+  над Java-WebSocket), `core/Agent.kt` (что нужно хендлерам от хоста, без Android).
+  Статус сервера протянут в UI (карточка «WebSocket-сервер»).
 
-**Проверка вручную:** `adb forward tcp:9008 tcp:9008`, любой WS-клиент
-(`websocat ws://127.0.0.1:9008`), отправить ping/мусор/неизвестный метод.
+**Готово ✅:** подключение по WS работает; `ping` → `{pong:true, ts}`; кривой
+JSON → `PARSE_ERROR` (id null); неизвестный метод → `METHOD_NOT_FOUND`; нет method
+→ `INVALID_REQUEST`; брошенное хендлером `RpcException` → структурный error.
+Проверено: 9 JVM unit-тестов (`JsonRpcDispatcherTest`, `FrameWriterTest`) +
+E2E `stage1_ping` на устройстве; UI показывает «Слушает :9008».
+
+**Проверка:** `scripts/test.sh` (unit + `stage0_smoke` + `stage1_ping`).
+Ручной кросс-чек: `tests/e2e/axon_client.py ping`.
 
 **Зависимости:** Этап 0.
 
