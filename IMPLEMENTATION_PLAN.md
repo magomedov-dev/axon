@@ -4,6 +4,12 @@ Stateless UI-агент автоматизации для Android на базе 
 WebSocket (Java-WebSocket) + JSON-RPC. Альтернатива UIAutomator2 для массового
 управления парком устройств по USB (`adb forward`).
 
+> **Статус: все этапы 0–10 завершены ✅.** Реализованы методы `ping`,
+> `dumpHierarchy`, `gesture`, `nodeAction`, `globalAction`, `screenshot`,
+> `setEventStream` + события (`screenChanged`/`toast`). Покрытие: 52 JVM
+> unit-теста + 11 E2E-стадий на устройстве (`scripts/test.sh`). Документация —
+> двуязычная (RU/EN).
+
 ## Зафиксированные решения
 
 - **Язык/рантайм:** Kotlin + kotlinx.coroutines.
@@ -434,7 +440,7 @@ foreground, выживание после home).
 
 ---
 
-## Этап 10 — Финализация и задел на будущее ⬜
+## Этап 10 — Финализация и задел на будущее ✅
 
 **Цель:** документация протокола, мелкая полировка, незакрытый путь к `getWindows`.
 
@@ -445,8 +451,16 @@ foreground, выживание после home).
   реализации.
 - Прогон полного сценария: dump → gesture → nodeAction → screenshot → события.
 
-**Готово:** протокол задокументирован; задел под `getWindows` обозначен; сквозной
-сценарий проходит.
+- Документация велась двуязычно (`README`/`PROTOCOL` RU+EN) и поддерживалась
+  синхронно с кодом по каждому этапу — отдельной финальной работы не потребовалось.
+
+**Готово ✅:** протокол полностью задокументирован (оба языка, раздел «Future
+extensions»); задел под `getWindows` обозначен (флаг `flagRetrieveInteractiveWindows`
+в конфиге + код-комментарий — путь открыт); сквозной сценарий проходит. Проверено:
+E2E `stage10_scenario` (10 проверок в одном потоке: ping → dump → gesture+toast →
+nodeAction → screenshot → globalAction+screenChanged → ping).
+
+**Проверка:** `scripts/test.sh` — все 11 E2E-стадий + 52 unit-теста зелёные.
 
 **Зависимости:** все предыдущие.
 

@@ -52,6 +52,10 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
 
     override fun rootNode(): AccessibilityNodeInfo? = rootInActiveWindow
 
+    // Future seam (getWindows): the accessibility config enables
+    // flagRetrieveInteractiveWindows, so `windows` / getWindows() are available to
+    // add a multi-window dump without changing the architecture.
+
     override suspend fun performGesture(gesture: GestureDescription): Boolean =
         suspendCancellableCoroutine { cont ->
             val callback = object : GestureResultCallback() {

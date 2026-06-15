@@ -344,7 +344,17 @@ connections that turned them on with [`setEventStream`](#seteventstream-).
 
 ---
 
-## 8. What is intentionally **not** in the APK
+## 8. Future extensions 🔜
+
+- **`getWindows`** — enumerate all interactive windows (status bar, IME, dialogs,
+  split-screen, overlays) instead of only the active one. The accessibility config
+  already enables window retrieval (`flagRetrieveInteractiveWindows`), so the path
+  is open; today `dumpHierarchy` / `nodeAction` operate on the active window
+  (`getRootInActiveWindow()`).
+
+---
+
+## 9. What is intentionally **not** in the APK
 
 These stay on the PC over plain `adb` and are out of scope for the agent: launch/
 kill apps, install/uninstall, package lists, volume/power/arbitrary keyevents,
