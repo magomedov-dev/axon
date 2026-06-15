@@ -97,11 +97,11 @@ Three kinds of messages share the one socket:
 | `INVALID_PARAMS` | params missing or wrong for the method |
 | `INTERNAL` | unexpected server-side failure |
 | `ACCESSIBILITY_DISABLED` | no active-window root (service off or no foreground window) |
-| `NODE_NOT_FOUND` 🔜 | node-action criteria matched nothing |
-| `AMBIGUOUS_MATCH` 🔜 | criteria matched several nodes and no `index` was given |
-| `ACTION_NOT_SUPPORTED` 🔜 | the node does not support the requested action |
-| `NOT_EDITABLE` 🔜 | `setText`/`setSelection` on a non-editable node |
-| `STALE` 🔜 | `performAction` returned false (node went stale) |
+| `NODE_NOT_FOUND` | node-action criteria matched nothing |
+| `AMBIGUOUS_MATCH` | criteria matched several nodes and no `index` was given |
+| `ACTION_NOT_SUPPORTED` | the node does not support the requested action |
+| `NOT_EDITABLE` | `setText`/`clear` on a non-editable node |
+| `STALE` | `performAction` returned false (node went stale) |
 | `GESTURE_FAILED` | gesture was cancelled or could not be dispatched |
 
 ---
@@ -210,14 +210,59 @@ duration and number of parallel strokes.
 
 ---
 
+### `nodeAction` ✅
+
+Find a node on the fly from a **fresh root** by exact-match criteria and perform an
+action on it. Stateless within the call — the node never outlives the RPC.
+
+- **params:**
+  - `by` *(required)* — selector: `resourceId` | `text` | `class` | `contentDesc`.
+  - `value` *(string, required)* — exact value to match.
+  - `index` *(int, optional)* — pick the N-th match (0-based) when several match.
+  - `action` *(required)* — one of the actions below.
+  - `text` *(string)* — **required for** `setText`.
+  - `start`, `end` *(int)* — **required for** `setSelection`.
+- **result:** `{ "success": true }`.
+- **errors:**
+  - `NODE_NOT_FOUND` — nothing matched.
+  - `AMBIGUOUS_MATCH` — several matched and no `index` was given (refine or pass `index`).
+  - `INVALID_PARAMS` — bad/missing params, or `index` out of range.
+  - `NOT_EDITABLE` — `setText`/`clear` on a non-editable node.
+  - `ACTION_NOT_SUPPORTED` — the matched node does not support the action.
+  - `STALE` — `performAction` returned false (node changed under us). **Not retried**
+    on the device — the PC decides whether to re-dump and retry.
+
+#### Action table
+
+| action | effect | extra params |
+|--------|--------|--------------|
+| `click` | `ACTION_CLICK` | — |
+| `longClick` | `ACTION_LONG_CLICK` | — |
+| `setText` | `ACTION_SET_TEXT` | `text` |
+| `clear` | `ACTION_SET_TEXT` with `""` | — |
+| `focus` | `ACTION_FOCUS` | — |
+| `clearFocus` | `ACTION_CLEAR_FOCUS` | — |
+| `select` | `ACTION_SELECT` | — |
+| `setSelection` | `ACTION_SET_SELECTION` | `start`, `end` |
+| `scrollForward` | `ACTION_SCROLL_FORWARD` | — |
+| `scrollBackward` | `ACTION_SCROLL_BACKWARD` | — |
+
+```json
+→ { "id": 5, "method": "nodeAction",
+    "params": { "by": "resourceId", "value": "com.app:id/login", "action": "click" } }
+← { "id": 5, "result": { "success": true } }
+
+→ { "method": "nodeAction",
+    "params": { "by": "class", "value": "android.widget.EditText",
+                "index": 0, "action": "setText", "text": "hello" } }
+```
+
+---
+
 ## 7. Planned methods 🔜
 
 Reserved and documented here for completeness; not yet implemented.
 
-- **`nodeAction`** — find a node on the fly (`by` = `resourceId|text|class|contentDesc`,
-  `value`, optional `index`) and `performAction`: `click`, `longClick`,
-  `setText`, `clear`, `focus`, `clearFocus`, `select`, `setSelection`,
-  `scrollForward`, `scrollBackward`. Returns `{ "success": bool }`.
 - **`globalAction`** — `back`, `home`, `recents`, `notifications`, `quickSettings`,
   `powerDialog`, `lockScreen`.
 - **`screenshot`** — JSON metadata then a binary frame

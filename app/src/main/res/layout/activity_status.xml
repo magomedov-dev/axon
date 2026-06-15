@@ -165,6 +165,22 @@
             android:layout_marginTop="28dp"
             android:text="@string/btn_open_settings" />
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilProbe"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:hint="@string/probe_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/probeField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionDone"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
         <TextView
             android:id="@+id/txtHint"
             android:layout_width="match_parent"

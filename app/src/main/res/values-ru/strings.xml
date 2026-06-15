@@ -20,4 +20,6 @@
 
     <string name="lang_ru">RU</string>
     <string name="lang_en">ENG</string>
+
+    <string name="probe_hint">Тестовое поле (самопроверка nodeAction)</string>
 </resources>
