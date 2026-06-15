@@ -261,12 +261,26 @@ action on it. Stateless within the call — the node never outlives the RPC.
 
 ---
 
+### `globalAction` ✅
+
+System-level actions via `performGlobalAction`. One key→constant table.
+
+- **params:** `action` *(required)* — one of: `back`, `home`, `recents`,
+  `notifications`, `quickSettings`, `powerDialog`, `lockScreen`.
+- **result:** `{ "success": <bool> }` — the platform `performGlobalAction` result.
+- **errors:** `INVALID_PARAMS` for a missing or unknown `action`.
+
+```json
+→ { "id": 6, "method": "globalAction", "params": { "action": "home" } }
+← { "id": 6, "result": { "success": true } }
+```
+
+---
+
 ## 7. Planned methods 🔜
 
 Reserved and documented here for completeness; not yet implemented.
 
-- **`globalAction`** — `back`, `home`, `recents`, `notifications`, `quickSettings`,
-  `powerDialog`, `lockScreen`.
 - **`screenshot`** — JSON metadata then a binary frame
   (`{ id, result: { screen, format, width, height, bytes } }` + `[4-byte id][image]`).
 - **`setEventStream`** — `{ enabled: bool }` toggles server-push for this connection.

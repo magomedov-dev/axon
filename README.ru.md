@@ -140,7 +140,7 @@ scripts/test.sh --e2e stage2 # один E2E-этап
 | `dumpHierarchy` | ✅ |
 | `gesture` | ✅ |
 | `nodeAction` | ✅ |
-| `globalAction` | 🔜 |
+| `globalAction` | ✅ |
 | `screenshot` | 🔜 |
 | `setEventStream` + события | 🔜 |
 

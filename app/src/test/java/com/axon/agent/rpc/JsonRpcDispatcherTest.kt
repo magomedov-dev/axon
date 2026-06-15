@@ -90,6 +90,7 @@ class JsonRpcDispatcherTest {
         override val screen = com.axon.agent.core.ScreenCounter()
         override fun rootNode() = null
         override suspend fun performGesture(gesture: android.accessibilityservice.GestureDescription) = false
+        override fun performGlobalAction(action: Int) = false
         init { assertNotNull(scope) }
     }
 }

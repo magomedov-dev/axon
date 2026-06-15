@@ -11,6 +11,7 @@ import com.axon.agent.core.ScreenCounter
 import com.axon.agent.core.TreeDispatcher
 import com.axon.agent.handlers.DumpHandler
 import com.axon.agent.handlers.GestureHandler
+import com.axon.agent.handlers.GlobalActionHandler
 import com.axon.agent.handlers.NodeActionHandler
 import com.axon.agent.handlers.PingHandler
 import com.axon.agent.rpc.JsonRpcDispatcher
@@ -61,6 +62,7 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
                     "dumpHierarchy" to DumpHandler,
                     "gesture" to GestureHandler,
                     "nodeAction" to NodeActionHandler,
+                    "globalAction" to GlobalActionHandler,
                 )
             )
         )

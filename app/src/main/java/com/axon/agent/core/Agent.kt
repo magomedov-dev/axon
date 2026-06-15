@@ -33,4 +33,10 @@ interface Agent {
      * onCompleted, false if it was cancelled or could not be dispatched.
      */
     suspend fun performGesture(gesture: GestureDescription): Boolean
+
+    /**
+     * Perform a system global action (GLOBAL_ACTION_*). Returns the platform
+     * result. Satisfied by AccessibilityService.performGlobalAction on the device.
+     */
+    fun performGlobalAction(action: Int): Boolean
 }

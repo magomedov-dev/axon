@@ -137,7 +137,7 @@ scripts/test.sh --e2e stage2 # one E2E stage
 | `dumpHierarchy` | ✅ |
 | `gesture` | ✅ |
 | `nodeAction` | ✅ |
-| `globalAction` | 🔜 |
+| `globalAction` | ✅ |
 | `screenshot` | 🔜 |
 | `setEventStream` + events | 🔜 |
 
