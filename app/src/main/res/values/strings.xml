@@ -3,10 +3,19 @@
     <string name="service_label">Axon UI Automation</string>
     <string name="service_description">Stateless UI automation agent. Exposes atomic UI primitives over a WebSocket + JSON-RPC server on port 9008. State (waits, retries, navigation) lives on the PC client.</string>
 
-    <string name="status_title">Axon UI Automation Agent</string>
-    <string name="status_service_on">Accessibility service: ENABLED</string>
-    <string name="status_service_off">Accessibility service: DISABLED</string>
-    <string name="status_server_placeholder">WebSocket server: (arrives in Stage 1)</string>
+    <string name="app_title">Axon</string>
+    <string name="app_subtitle">UI Automation Agent</string>
+
+    <string name="label_accessibility">Accessibility service</string>
+    <string name="label_server">WebSocket server</string>
+
+    <string name="state_enabled">Enabled</string>
+    <string name="state_disabled">Disabled</string>
+    <string name="state_idle">Not running yet</string>
+
     <string name="btn_open_settings">Open Accessibility settings</string>
-    <string name="hint_enable">Enable \"Axon UI Automation\" in Accessibility settings, then connect from the PC via:\nadb forward tcp:9008 tcp:9008</string>
+    <string name="hint_connect">Connect from the PC:\nadb forward tcp:9008 tcp:9008</string>
+
+    <string name="lang_ru">RU</string>
+    <string name="lang_en">ENG</string>
 </resources>

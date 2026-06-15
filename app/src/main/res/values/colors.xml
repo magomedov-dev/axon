@@ -1,0 +1,4 @@
+<resources>
+    <color name="status_on">#FF22C55E</color>
+    <color name="status_off">#FF9CA3AF</color>
+</resources>
