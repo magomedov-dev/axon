@@ -2,7 +2,12 @@ package com.axon.agent
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.util.Log
 import android.view.Display
@@ -22,6 +27,7 @@ import com.axon.agent.handlers.ScreenshotHandler
 import com.axon.agent.rpc.ErrorCodes
 import com.axon.agent.rpc.JsonRpcDispatcher
 import com.axon.agent.rpc.RpcException
+import com.axon.agent.ui.StatusActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import com.axon.agent.rpc.MethodRouter
@@ -119,6 +125,7 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
+        startForegroundNotification()
         startServer()
         eventHub = AccessibilityEventHub(
             scope = scope,
@@ -140,6 +147,36 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
                 }
             }
         }
+    }
+
+    /**
+     * Promote to a foreground service so the system is far less likely to kill it
+     * while the controlling app is backgrounded. specialUse type: the FGS exists
+     * solely to keep the local WebSocket control channel alive.
+     */
+    private fun startForegroundNotification() {
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_ID,
+                getString(R.string.notif_channel_name),
+                NotificationManager.IMPORTANCE_LOW,
+            )
+        )
+        val tap = PendingIntent.getActivity(
+            this,
+            0,
+            Intent(this, StatusActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE,
+        )
+        val notification = Notification.Builder(this, CHANNEL_ID)
+            .setContentTitle(getString(R.string.service_label))
+            .setContentText(getString(R.string.notif_text))
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentIntent(tap)
+            .setOngoing(true)
+            .build()
+        startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
     }
 
     private fun startServer() {
@@ -202,6 +239,7 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
         stopServer()
         scope.cancel()
         runCatching { tree.close() }
+        runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
     }
 
     // ---- status surface for the UI ---------------------------------------
@@ -213,6 +251,8 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
         const val PORT = 9008
         private const val STOP_TIMEOUT_MS = 500
         private const val EVENT_DEBOUNCE_MS = 80L
+        private const val CHANNEL_ID = "axon_status"
+        private const val NOTIF_ID = 1
 
         /** Non-null only while the service is connected. Read by the status UI. */
         @Volatile

@@ -23,4 +23,7 @@
 
     <string name="probe_hint">Тестовое поле (самопроверка nodeAction)</string>
     <string name="probe_toast">Axon: тестовый тост</string>
+
+    <string name="notif_channel_name">Статус Axon</string>
+    <string name="notif_text">WebSocket-сервер на :9008</string>
 </resources>

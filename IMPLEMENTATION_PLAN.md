@@ -379,7 +379,7 @@ unit-тестов `AccessibilityEventHubTest` (debounce/дедуп/тосты) +
 
 ---
 
-## Этап 8 — Устойчивость: foreground, ping/pong, состояние «accessibility off» ⬜
+## Этап 8 — Устойчивость: foreground, ping/pong, состояние «accessibility off» ✅
 
 **Цель:** сервис живёт дольше, мёртвый сервис детектируется, граничные состояния
 не валят процесс.
@@ -393,13 +393,17 @@ unit-тестов `AccessibilityEventHubTest` (debounce/дедуп/тосты) +
   `ACCESSIBILITY_DISABLED` во всех tree-зависимых методах; никаких падений.
 - Корректная отмена scope и остановка сервера в `onDestroy/onUnbind`.
 
-**Готово:** сервис не убивается агрессивно при свёрнутом приложении; `ping`
-отвечает только при живом сервисе; при выключенном accessibility методы дают
-внятный error.
+- Foreground-сервис типа `specialUse` (манифест: тип + разрешение
+  `FOREGROUND_SERVICE_SPECIAL_USE` + property), `startForeground` с нотификацией
+  (канал low). `ACCESSIBILITY_DISABLED` при пустом корне уже в Dump/NodeAction.
 
-**Проверка вручную:** свернуть приложение, подождать, убедиться что WS жив и
-`dumpHierarchy` работает; выключить accessibility — проверить error; убить сервис
-и убедиться, что `ping` не отвечает (детект на ПК).
+**Готово ✅:** сервис промоутится в foreground (`isForeground=true`) и переживает
+сворачивание приложения; `ping` отвечает только при живом конвейере; tree-методы
+при пустом корне дают `ACCESSIBILITY_DISABLED` без падения; чистый teardown
+(scope/server/tree/foreground). Проверено: E2E `stage8_resilience` (ping,
+foreground, выживание после home).
+
+**Проверка:** `scripts/test.sh`.
 
 **Зависимости:** Этапы 1–2.
 

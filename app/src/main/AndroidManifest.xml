@@ -3,6 +3,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -26,6 +27,7 @@
         <service
             android:name=".AutomationAccessibilityService"
             android:exported="false"
+            android:foregroundServiceType="specialUse"
             android:label="@string/service_label"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
@@ -34,6 +36,9 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Stateless UI-automation agent kept alive to serve a local WebSocket control channel over USB/adb for authorized device-fleet automation." />
         </service>
 
         <!-- Persists the per-app locale chosen via AppCompatDelegate (needed below API 33). -->

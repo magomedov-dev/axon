@@ -48,6 +48,15 @@ Two seams keep the core unit-testable off-device:
 - **`Agent`** abstracts what handlers need from the host, so the dispatcher and
   handlers can be tested without Android.
 
+### Resilience
+
+- The service runs as a **foreground service** (`specialUse`) so the system is far
+  less likely to kill it while the controlling app is backgrounded.
+- Liveness is app-level: the JSON-RPC [`ping`](docs/PROTOCOL.md) proves the whole
+  pipeline is alive, not just the TCP socket.
+- Tree-dependent calls return `ACCESSIBILITY_DISABLED` (never crash) when there is
+  no active-window root. Scope/server/tree are torn down cleanly on unbind/destroy.
+
 ### Layout
 
 ```
