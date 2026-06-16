@@ -20,3 +20,5 @@ __pycache__/
 *.iml
 .kotlin/
 /.ui_*.png
+/keystore.properties
+/.tooling/axon-release.jks
