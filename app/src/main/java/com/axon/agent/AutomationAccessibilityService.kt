@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import com.axon.agent.core.Agent
 import com.axon.agent.core.ScreenCounter
 import com.axon.agent.core.TreeDispatcher
@@ -20,6 +21,7 @@ import com.axon.agent.events.AccessibilityEventHub
 import com.axon.agent.handlers.DumpHandler
 import com.axon.agent.handlers.EventStreamHandler
 import com.axon.agent.handlers.GestureHandler
+import com.axon.agent.handlers.GetWindowsHandler
 import com.axon.agent.handlers.GlobalActionHandler
 import com.axon.agent.handlers.NodeActionHandler
 import com.axon.agent.handlers.PingHandler
@@ -52,9 +54,8 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
 
     override fun rootNode(): AccessibilityNodeInfo? = rootInActiveWindow
 
-    // Future seam (getWindows): the accessibility config enables
-    // flagRetrieveInteractiveWindows, so `windows` / getWindows() are available to
-    // add a multi-window dump without changing the architecture.
+    // Enabled by flagRetrieveInteractiveWindows in the accessibility config.
+    override fun windowInfos(): List<AccessibilityWindowInfo> = windows
 
     override suspend fun performGesture(gesture: GestureDescription): Boolean =
         suspendCancellableCoroutine { cont ->
@@ -118,6 +119,7 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
                     "globalAction" to GlobalActionHandler,
                     "screenshot" to ScreenshotHandler,
                     "setEventStream" to EventStreamHandler,
+                    "getWindows" to GetWindowsHandler,
                 )
             )
         )

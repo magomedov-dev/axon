@@ -116,6 +116,7 @@ class JsonRpcDispatcherTest {
         override val tree: TreeDispatcher get() = error("tree must not be used in this test")
         override val screen = com.axon.agent.core.ScreenCounter()
         override fun rootNode() = null
+        override fun windowInfos() = emptyList<android.view.accessibility.AccessibilityWindowInfo>()
         override suspend fun performGesture(gesture: android.accessibilityservice.GestureDescription) = false
         override fun performGlobalAction(action: Int) = false
         override suspend fun captureScreenshot(): android.graphics.Bitmap = error("no screenshot in test")

@@ -158,6 +158,7 @@ scripts/test.sh --e2e stage2 # один E2E-этап
 | `globalAction` | ✅ |
 | `screenshot` | ✅ |
 | `setEventStream` + события | ✅ |
+| `getWindows` | ✅ |
 
 Поэтапный план и критерии готовности — в
 [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).

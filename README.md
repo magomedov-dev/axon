@@ -154,6 +154,7 @@ scripts/test.sh --e2e stage2 # one E2E stage
 | `globalAction` | ✅ |
 | `screenshot` | ✅ |
 | `setEventStream` + events | ✅ |
+| `getWindows` | ✅ |
 
 See [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) for the staged roadmap and
 per-stage acceptance criteria.

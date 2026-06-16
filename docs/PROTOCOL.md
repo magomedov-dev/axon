@@ -178,6 +178,51 @@ Serialize the UI tree from a fresh `getRootInActiveWindow()`.
 
 ---
 
+### `getWindows` ✅
+
+Enumerate **all** interactive windows — application, IME, system bars, dialogs,
+overlays, split-screen — not just the active one (which is what `dumpHierarchy`
+covers). Windows are returned topmost first (descending `layer`).
+
+- **params:**
+  - `includeTree` *(bool, optional, default false)* — attach each window's node
+    tree under `root`.
+  - `maxDepth`, `compress` *(optional)* — applied per window's tree, same meaning
+    as in `dumpHierarchy`; only relevant with `includeTree`.
+- **result:** `{ "screen": int, "windows": [ <window>, ... ] }`, each window:
+
+```json
+{
+  "windowId": 12,
+  "type": "application",
+  "layer": 1,
+  "active": true,
+  "focused": true,
+  "title": "Axon",
+  "package": "com.axon.agent",
+  "bounds": { "left": 0, "top": 0, "right": 1080, "bottom": 2280 },
+  "root": { "nodeId": 0, ... }
+}
+```
+
+- `type` — `application` | `inputMethod` | `system` | `accessibilityOverlay` |
+  `splitScreenDivider` | `magnification` | `unknown`.
+- `title` / `package` may be `null` for system windows without a node root.
+- `root` is present only with `includeTree: true` (and a non-null window root).
+
+```json
+→ { "id": 9, "method": "getWindows", "params": { "includeTree": false } }
+← { "id": 9, "result": { "screen": 3, "windows": [
+      { "windowId": 12, "type": "application", "layer": 1, "active": true,
+        "focused": true, "title": "Axon", "package": "com.axon.agent",
+        "bounds": { "left": 0, "top": 0, "right": 1080, "bottom": 2280 } },
+      { "windowId": 4, "type": "system", "layer": 0, "active": false,
+        "focused": false, "title": null, "package": null,
+        "bounds": { "left": 0, "top": 0, "right": 1080, "bottom": 80 } } ] } }
+```
+
+---
+
 ### `gesture` ✅
 
 The single coordinate primitive via `dispatchGesture`. Tap, long-press,
@@ -358,17 +403,7 @@ connections that turned them on with [`setEventStream`](#seteventstream-).
 
 ---
 
-## 8. Future extensions 🔜
-
-- **`getWindows`** — enumerate all interactive windows (status bar, IME, dialogs,
-  split-screen, overlays) instead of only the active one. The accessibility config
-  already enables window retrieval (`flagRetrieveInteractiveWindows`), so the path
-  is open; today `dumpHierarchy` / `nodeAction` operate on the active window
-  (`getRootInActiveWindow()`).
-
----
-
-## 9. What is intentionally **not** in the APK
+## 8. What is intentionally **not** in the APK
 
 These stay on the PC over plain `adb` and are out of scope for the agent: launch/
 kill apps, install/uninstall, package lists, volume/power/arbitrary keyevents,

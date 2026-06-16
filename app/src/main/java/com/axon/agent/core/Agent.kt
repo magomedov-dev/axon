@@ -3,6 +3,7 @@ package com.axon.agent.core
 import android.accessibilityservice.GestureDescription
 import android.graphics.Bitmap
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -28,6 +29,13 @@ interface Agent {
      * foreground window). Never cached. Call on the [tree] thread.
      */
     fun rootNode(): AccessibilityNodeInfo?
+
+    /**
+     * All interactive windows (application, IME, system, dialogs, overlays,
+     * split-screen). Fresh each call; the caller recycles them. Call on the [tree]
+     * thread. Satisfied by AccessibilityService.getWindows() on the device.
+     */
+    fun windowInfos(): List<AccessibilityWindowInfo>
 
     /**
      * Dispatch a gesture and suspend until it finishes. Returns true on
