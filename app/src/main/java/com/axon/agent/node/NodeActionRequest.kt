@@ -21,6 +21,8 @@ data class NodeActionRequest(
     val text: String?,
     val start: Int?,
     val end: Int?,
+    /** Search within this specific window; null = the active window. */
+    val windowId: Int?,
 ) {
     companion object {
         fun parse(params: JsonObject?): NodeActionRequest {
@@ -52,7 +54,9 @@ data class NodeActionRequest(
                 bad("action 'setSelection' requires 'start' and 'end'")
             }
 
-            return NodeActionRequest(by, value, match, action, index, text, start, end)
+            val windowId = obj["windowId"]?.jsonPrimitive?.intOrNull
+
+            return NodeActionRequest(by, value, match, action, index, text, start, end, windowId)
         }
 
         private fun bad(message: String): Nothing =

@@ -15,6 +15,7 @@ object ErrorCodes {
 
     // accessibility / node operations (used from later stages)
     const val ACCESSIBILITY_DISABLED = "ACCESSIBILITY_DISABLED"
+    const val WINDOW_NOT_FOUND = "WINDOW_NOT_FOUND"
     const val NODE_NOT_FOUND = "NODE_NOT_FOUND"
     const val AMBIGUOUS_MATCH = "AMBIGUOUS_MATCH"
     const val ACTION_NOT_SUPPORTED = "ACTION_NOT_SUPPORTED"

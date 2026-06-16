@@ -102,6 +102,7 @@ Three kinds of messages share the one socket:
 | `INVALID_PARAMS` | params missing or wrong for the method |
 | `INTERNAL` | unexpected server-side failure |
 | `ACCESSIBILITY_DISABLED` | no active-window root (service off or no foreground window) |
+| `WINDOW_NOT_FOUND` | `nodeAction` got a `windowId` with no matching window |
 | `NODE_NOT_FOUND` | node-action criteria matched nothing |
 | `AMBIGUOUS_MATCH` | criteria matched several nodes and no `index` was given |
 | `ACTION_NOT_SUPPORTED` | the node does not support the requested action |
@@ -275,12 +276,15 @@ action on it. Stateless within the call — the node never outlives the RPC.
     (Kotlin regex, matches anywhere; anchor with `^`/`$` for a full match). An
     invalid regex is rejected with `INVALID_PARAMS`.
   - `index` *(int, optional)* — pick the N-th match (0-based) when several match.
+  - `windowId` *(int, optional)* — search within this specific window (from
+    [`getWindows`](#getwindows-)); default is the active window.
   - `action` *(required)* — one of the actions below.
   - `text` *(string)* — **required for** `setText`.
   - `start`, `end` *(int)* — **required for** `setSelection`.
 - **result:** `{ "success": true }`.
 - **errors:**
   - `NODE_NOT_FOUND` — nothing matched.
+  - `WINDOW_NOT_FOUND` — `windowId` given but no such window (it may have closed).
   - `AMBIGUOUS_MATCH` — several matched and no `index` was given (refine or pass `index`).
   - `INVALID_PARAMS` — bad/missing params, or `index` out of range.
   - `NOT_EDITABLE` — `setText`/`clear` on a non-editable node.

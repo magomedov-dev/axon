@@ -3,6 +3,7 @@ package com.axon.agent.handlers
 import android.os.Bundle
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction
+import android.view.accessibility.AccessibilityWindowInfo
 import com.axon.agent.node.NodeActionRequest
 import com.axon.agent.node.NodeActions
 import com.axon.agent.node.NodeFinder
@@ -29,8 +30,7 @@ object NodeActionHandler : RpcHandler {
         val req = NodeActionRequest.parse(params)
 
         return ctx.agent.tree.on {
-            val root = ctx.agent.rootNode()
-                ?: throw RpcException(ErrorCodes.ACCESSIBILITY_DISABLED, "no active window root")
+            val root = resolveRoot(ctx, req)
             val matches = NodeFinder.findAll(root, req.by, req.value, req.match)
             try {
                 if (matches.isEmpty()) {
@@ -44,6 +44,24 @@ object NodeActionHandler : RpcHandler {
                 recycle(root)
             }
         }
+    }
+
+    /** The window root to search: a specific window when `windowId` is set, else the active window. */
+    private fun resolveRoot(ctx: RpcContext, req: NodeActionRequest): AccessibilityNodeInfo {
+        if (req.windowId == null) {
+            return ctx.agent.rootNode()
+                ?: throw RpcException(ErrorCodes.ACCESSIBILITY_DISABLED, "no active window root")
+        }
+        val windows = ctx.agent.windowInfos()
+        val root = try {
+            windows.firstOrNull { it.id == req.windowId }?.root
+        } finally {
+            windows.forEach(::recycleWindow)
+        }
+        return root ?: throw RpcException(
+            ErrorCodes.WINDOW_NOT_FOUND,
+            "no window with id ${req.windowId} (it may have closed, or has no root)"
+        )
     }
 
     private fun select(matches: List<AccessibilityNodeInfo>, req: NodeActionRequest): AccessibilityNodeInfo =
@@ -108,5 +126,10 @@ object NodeActionHandler : RpcHandler {
     @Suppress("DEPRECATION")
     private fun recycle(node: AccessibilityNodeInfo) {
         runCatching { node.recycle() }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun recycleWindow(window: AccessibilityWindowInfo) {
+        runCatching { window.recycle() }
     }
 }

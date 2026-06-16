@@ -64,6 +64,12 @@ class NodeActionRequestTest {
     @Test fun unknownMatch_invalid() = assertInvalid("""{"by":"text","value":"x","action":"click","match":"fuzzy"}""")
 
     @Test
+    fun windowId_optional() {
+        assertNull(parse("""{"by":"text","value":"x","action":"click"}""").windowId)
+        assertEquals(42, parse("""{"by":"text","value":"x","action":"click","windowId":42}""").windowId)
+    }
+
+    @Test
     fun invalidRegexValue_invalid() =
         assertInvalid("""{"by":"text","value":"(unclosed","action":"click","match":"regex"}""")
 

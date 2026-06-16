@@ -71,6 +71,23 @@ def main() -> int:
             check("root tree is well-formed", root.get("nodeId") == 0)
             check("app window tree contains 'Axon'",
                   any(n.get("text") == "Axon" for n in flatten(root)))
+
+        # window-scoped nodeAction: act inside a specific window by windowId
+        if app:
+            win_id = app["windowId"]
+            probe_id = f"{PKG}:id/probeField"
+            r = ws.rpc("nodeAction", {"by": "resourceId", "value": probe_id,
+                                      "action": "setText", "text": "win-scoped", "windowId": win_id})
+            check("nodeAction with windowId -> success", r.get("result", {}).get("success") is True, r)
+            time.sleep(0.6)
+            node = next((n for n in flatten(ws.rpc("dumpHierarchy", {})["result"])
+                         if n.get("resourceId") == probe_id), None)
+            check("window-scoped setText took effect", (node or {}).get("text") == "win-scoped",
+                  (node or {}).get("text"))
+            ws.rpc("nodeAction", {"by": "resourceId", "value": probe_id, "action": "clear", "windowId": win_id})
+
+        r = ws.rpc("nodeAction", {"by": "text", "value": "Axon", "action": "click", "windowId": 987654321})
+        check("unknown windowId -> WINDOW_NOT_FOUND", r.get("error", {}).get("code") == "WINDOW_NOT_FOUND", r)
     finally:
         ws.close()
 
