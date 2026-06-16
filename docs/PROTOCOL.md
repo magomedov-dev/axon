@@ -102,7 +102,7 @@ Three kinds of messages share the one socket:
 | `INVALID_PARAMS` | params missing or wrong for the method |
 | `INTERNAL` | unexpected server-side failure |
 | `ACCESSIBILITY_DISABLED` | no active-window root (service off or no foreground window) |
-| `WINDOW_NOT_FOUND` | `nodeAction` got a `windowId` with no matching window |
+| `WINDOW_NOT_FOUND` | a `windowId` (dumpHierarchy/nodeAction) has no matching window |
 | `NODE_NOT_FOUND` | node-action criteria matched nothing |
 | `AMBIGUOUS_MATCH` | criteria matched several nodes and no `index` was given |
 | `ACTION_NOT_SUPPORTED` | the node does not support the requested action |
@@ -137,6 +137,8 @@ Serialize the UI tree from a fresh `getRootInActiveWindow()`.
     Default: unbounded.
   - `compress` *(bool, optional)* — drop the (recomputable) `center` and any empty
     `children` array to save bandwidth. Default: `false`.
+  - `windowId` *(int, optional)* — dump this specific window (from
+    [`getWindows`](#getwindows-)); default is the active window.
   - **Recommendation:** on dense screens prefer `compress: true` plus a bounded
     `maxDepth` as the norm; the unbounded default is the most expensive path
     (every `getChild()` is an IPC).
@@ -144,7 +146,8 @@ Serialize the UI tree from a fresh `getRootInActiveWindow()`.
   extra top-level fields:
   - `screen` *(int)* — screen-state generation (see `screenChanged`).
   - `package` *(string)* — foreground app package; present in every dump.
-- **errors:** `ACCESSIBILITY_DISABLED` when there is no active-window root.
+- **errors:** `ACCESSIBILITY_DISABLED` when there is no active-window root;
+  `WINDOW_NOT_FOUND` when a given `windowId` has no matching window.
 
 ```json
 → { "id": 2, "method": "dumpHierarchy", "params": { "maxDepth": 2, "compress": true } }

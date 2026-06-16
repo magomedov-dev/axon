@@ -87,7 +87,17 @@ def main() -> int:
             ws.rpc("nodeAction", {"by": "resourceId", "value": probe_id, "action": "clear", "windowId": win_id})
 
         r = ws.rpc("nodeAction", {"by": "text", "value": "Axon", "action": "click", "windowId": 987654321})
-        check("unknown windowId -> WINDOW_NOT_FOUND", r.get("error", {}).get("code") == "WINDOW_NOT_FOUND", r)
+        check("nodeAction unknown windowId -> WINDOW_NOT_FOUND",
+              r.get("error", {}).get("code") == "WINDOW_NOT_FOUND", r)
+
+        # window-scoped dumpHierarchy
+        if app:
+            res = ws.rpc("dumpHierarchy", {"windowId": app["windowId"], "compress": True})["result"]
+            check("dumpHierarchy windowId dumps that window",
+                  res.get("package") == PKG and res.get("nodeId") == 0, res.get("package"))
+        r = ws.rpc("dumpHierarchy", {"windowId": 987654321})
+        check("dumpHierarchy unknown windowId -> WINDOW_NOT_FOUND",
+              r.get("error", {}).get("code") == "WINDOW_NOT_FOUND", r)
     finally:
         ws.close()
 
