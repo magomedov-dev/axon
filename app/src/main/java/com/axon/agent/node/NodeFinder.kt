@@ -13,11 +13,16 @@ import android.view.accessibility.AccessibilityNodeInfo
  */
 object NodeFinder {
 
-    fun findAll(root: AccessibilityNodeInfo, by: String, value: String): List<AccessibilityNodeInfo> {
+    fun findAll(
+        root: AccessibilityNodeInfo,
+        by: String,
+        value: String,
+        match: String,
+    ): List<AccessibilityNodeInfo> {
         val out = ArrayList<AccessibilityNodeInfo>()
 
         fun visit(node: AccessibilityNodeInfo) {
-            if (matches(node, by, value)) out.add(node)
+            if (matches(node, by, value, match)) out.add(node)
             val count = node.childCount
             for (i in 0 until count) {
                 val child = node.getChild(i) ?: continue
@@ -29,11 +34,14 @@ object NodeFinder {
         return out
     }
 
-    private fun matches(node: AccessibilityNodeInfo, by: String, value: String): Boolean = when (by) {
-        "resourceId" -> node.viewIdResourceName == value
-        "text" -> node.text?.toString() == value
-        "class" -> node.className?.toString() == value
-        "contentDesc" -> node.contentDescription?.toString() == value
-        else -> false
+    private fun matches(node: AccessibilityNodeInfo, by: String, value: String, match: String): Boolean {
+        val actual = when (by) {
+            "resourceId" -> node.viewIdResourceName
+            "text" -> node.text?.toString()
+            "class" -> node.className?.toString()
+            "contentDesc" -> node.contentDescription?.toString()
+            else -> return false
+        }
+        return NodeMatch.matches(actual, value, match)
     }
 }

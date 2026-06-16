@@ -111,6 +111,14 @@ def main() -> int:
         check("clear probe -> success", r.get("result", {}).get("success") is True, r)
         check("probe value removed", probe_text() != "axon-probe-42")
 
+        # E2. match modes: exact misses "Axo", contains/regex find the "Axon" title
+        r = node_action(ws, by="text", value="Axo", action="click")
+        check("exact 'Axo' -> NODE_NOT_FOUND", err(r) == "NODE_NOT_FOUND", r)
+        r = node_action(ws, by="text", value="Axo", action="click", match="contains")
+        check("contains 'Axo' finds title", err(r) == "ACTION_NOT_SUPPORTED", r)
+        r = node_action(ws, by="text", value="^Ax", action="click", match="regex")
+        check("regex '^Ax' finds title", err(r) == "ACTION_NOT_SUPPORTED", r)
+
         # F. AMBIGUOUS_MATCH + index resolution
         classes = Counter(n.get("class") for n in flatten(dump(ws)) if n.get("class"))
         dup_class = next((c for c, n in classes.items() if n >= 2), None)

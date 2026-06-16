@@ -50,6 +50,23 @@ class NodeActionRequestTest {
         assertInvalid("""{"by":"class","value":"X","action":"click","index":-1}""")
     }
 
+    @Test
+    fun match_defaultsToExact() {
+        assertEquals(NodeMatch.EXACT, parse("""{"by":"text","value":"x","action":"click"}""").match)
+    }
+
+    @Test
+    fun match_containsAndRegexParsed() {
+        assertEquals(NodeMatch.CONTAINS, parse("""{"by":"text","value":"x","action":"click","match":"contains"}""").match)
+        assertEquals(NodeMatch.REGEX, parse("""{"by":"text","value":"a.*","action":"click","match":"regex"}""").match)
+    }
+
+    @Test fun unknownMatch_invalid() = assertInvalid("""{"by":"text","value":"x","action":"click","match":"fuzzy"}""")
+
+    @Test
+    fun invalidRegexValue_invalid() =
+        assertInvalid("""{"by":"text","value":"(unclosed","action":"click","match":"regex"}""")
+
     @Test fun missingBy_invalid() = assertInvalid("""{"value":"x","action":"click"}""")
     @Test fun invalidBy_invalid() = assertInvalid("""{"by":"nope","value":"x","action":"click"}""")
     @Test fun missingValue_invalid() = assertInvalid("""{"by":"text","action":"click"}""")

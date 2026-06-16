@@ -56,6 +56,9 @@ Two seams keep the core unit-testable off-device:
   pipeline is alive, not just the TCP socket.
 - Tree-dependent calls return `ACCESSIBILITY_DISABLED` (never crash) when there is
   no active-window root. Scope/server/tree are torn down cleanly on unbind/destroy.
+- The foreground-service `specialUse` *type* is enforced on API 34+; on API 30–33
+  it is ignored but the service still promotes (verified on API 33). A mixed fleet
+  spanning API 30–34+ is worth keeping in the test matrix.
 
 ### Layout
 

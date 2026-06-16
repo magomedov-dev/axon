@@ -13,10 +13,14 @@ import kotlinx.coroutines.launch
  * - Only WINDOW_STATE_CHANGED / WINDOW_CONTENT_CHANGED feed screenChanged; scroll/
  *   focus/selection noise never reaches here (the service filters by type).
  * - Trailing debounce: a burst (animation/scroll) collapses into a single emit
- *   once it goes quiet for [debounceMs].
- * - Dedup: the screen counter is bumped (and an event emitted) only on a *real*
- *   change — a window state change, or a new package/window signature. Pure
- *   content churn on the same screen (clocks, tickers) is suppressed.
+ *   once it goes quiet for [debounceMs]; an animation that never settles produces
+ *   nothing until it stops.
+ * - Every settled change — including in-place content changes within the SAME
+ *   window (an error message appearing, a section expanding) — emits a
+ *   screenChanged with a freshly incremented `screen`. This is deliberate: a
+ *   client waiting for an element on the event stream must get a "recheck" signal
+ *   rather than silence, otherwise it has to fall back to polling. Pure churn that
+ *   never settles is still suppressed by the debounce; clients confirm with a dump.
  *
  * All state is touched only from [dispatcher] (the device's main thread, a single
  * test dispatcher in tests), so no locking is needed. [broadcast] is synchronous
@@ -30,32 +34,16 @@ class AccessibilityEventHub(
     private val broadcast: (String) -> Unit,
 ) {
     private var debounceJob: Job? = null
-    private var sawStateChange = false
     private var latestPackage: String? = null
-    private var latestSignature: String? = null
-    private var lastEmittedSignature: String? = null
 
-    /** A window state/content change. [stateChange] = true for WINDOW_STATE_CHANGED. */
-    fun onScreenEvent(stateChange: Boolean, packageName: String?, windowId: Int) {
-        if (stateChange) sawStateChange = true
+    /** A window state or content change (both feed the same debounced signal). */
+    fun onScreenEvent(packageName: String?) {
         latestPackage = packageName
-        latestSignature = "$packageName#$windowId"
-
         debounceJob?.cancel()
         debounceJob = scope.launch(dispatcher) {
             delay(debounceMs)
-            emit()
+            broadcast(EventMessages.screenChanged(screen.next(), latestPackage))
         }
-    }
-
-    private fun emit() {
-        val realChange = sawStateChange || latestSignature != lastEmittedSignature
-        val pkg = latestPackage
-        val signature = latestSignature
-        sawStateChange = false
-        if (!realChange) return
-        lastEmittedSignature = signature
-        broadcast(EventMessages.screenChanged(screen.next(), pkg))
     }
 
     /** A toast / notification. Emitted immediately (no debounce). */

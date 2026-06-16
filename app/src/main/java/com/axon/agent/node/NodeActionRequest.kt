@@ -15,6 +15,7 @@ import kotlinx.serialization.json.jsonPrimitive
 data class NodeActionRequest(
     val by: String,
     val value: String,
+    val match: String,
     val action: String,
     val index: Int?,
     val text: String?,
@@ -29,6 +30,12 @@ data class NodeActionRequest(
             if (by !in NodeActions.BY) bad("invalid 'by': '$by' (expected one of ${NodeActions.BY})")
 
             val value = obj["value"]?.jsonPrimitive?.contentOrNull ?: bad("missing 'value'")
+
+            val match = obj["match"]?.jsonPrimitive?.contentOrNull ?: NodeMatch.EXACT
+            if (match !in NodeMatch.MODES) bad("invalid 'match': '$match' (expected one of ${NodeMatch.MODES})")
+            if (match == NodeMatch.REGEX) {
+                runCatching { Regex(value) }.onFailure { bad("invalid regex 'value': ${it.message}") }
+            }
 
             val action = obj["action"]?.jsonPrimitive?.contentOrNull ?: bad("missing 'action'")
             if (action !in NodeActions.ACTIONS) bad("unknown action: '$action'")
@@ -45,7 +52,7 @@ data class NodeActionRequest(
                 bad("action 'setSelection' requires 'start' and 'end'")
             }
 
-            return NodeActionRequest(by, value, action, index, text, start, end)
+            return NodeActionRequest(by, value, match, action, index, text, start, end)
         }
 
         private fun bad(message: String): Nothing =

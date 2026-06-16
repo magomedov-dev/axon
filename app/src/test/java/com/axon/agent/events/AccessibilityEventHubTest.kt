@@ -22,12 +22,12 @@ class AccessibilityEventHubTest {
         RpcMessages.json.parseToJsonElement(json).jsonObject[key]!!.jsonPrimitive.int
 
     @Test
-    fun stateChange_emitsOneScreenChanged() = runTest {
+    fun change_emitsOneScreenChanged() = runTest {
         val emitted = mutableListOf<String>()
         val screen = ScreenCounter()
         val hub = AccessibilityEventHub(this, StandardTestDispatcher(testScheduler), screen, 80L) { emitted.add(it) }
 
-        hub.onScreenEvent(stateChange = true, packageName = "com.a", windowId = 1)
+        hub.onScreenEvent("com.a")
         advanceUntilIdle()
 
         assertEquals(1, emitted.size)
@@ -43,9 +43,9 @@ class AccessibilityEventHubTest {
         val screen = ScreenCounter()
         val hub = AccessibilityEventHub(this, StandardTestDispatcher(testScheduler), screen, 80L) { emitted.add(it) }
 
-        hub.onScreenEvent(true, "com.a", 1)
-        hub.onScreenEvent(false, "com.a", 1)
-        hub.onScreenEvent(false, "com.a", 1)
+        hub.onScreenEvent("com.a")
+        hub.onScreenEvent("com.a")
+        hub.onScreenEvent("com.a")
         advanceUntilIdle()
 
         assertEquals("burst should collapse to one event", 1, emitted.size)
@@ -53,35 +53,20 @@ class AccessibilityEventHubTest {
     }
 
     @Test
-    fun contentOnlyOnSameScreen_isSuppressed() = runTest {
+    fun contentChangeOnSameScreen_alsoEmits() = runTest {
+        // In-place content change (e.g. a validation error appearing) must produce
+        // a signal so event-driven waits work — it is NOT suppressed.
         val emitted = mutableListOf<String>()
         val screen = ScreenCounter()
         val hub = AccessibilityEventHub(this, StandardTestDispatcher(testScheduler), screen, 80L) { emitted.add(it) }
 
-        hub.onScreenEvent(true, "com.a", 1)
+        hub.onScreenEvent("com.a")
         advanceUntilIdle()
-        // content churn, same package/window, no state change -> no new event
-        hub.onScreenEvent(false, "com.a", 1)
-        advanceUntilIdle()
-
-        assertEquals(1, emitted.size)
-        assertEquals(1, screen.value)
-    }
-
-    @Test
-    fun packageOrWindowChange_emitsAgain() = runTest {
-        val emitted = mutableListOf<String>()
-        val screen = ScreenCounter()
-        val hub = AccessibilityEventHub(this, StandardTestDispatcher(testScheduler), screen, 80L) { emitted.add(it) }
-
-        hub.onScreenEvent(true, "com.a", 1)
-        advanceUntilIdle()
-        hub.onScreenEvent(false, "com.b", 2)
+        hub.onScreenEvent("com.a") // same package, separate settled change
         advanceUntilIdle()
 
         assertEquals(2, emitted.size)
         assertEquals(2, screen.value)
-        assertEquals("com.b", field(emitted[1], "package"))
     }
 
     @Test

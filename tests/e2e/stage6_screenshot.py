@@ -87,6 +87,13 @@ def main() -> int:
         # validation (no binary follows an error)
         r = ws.rpc("screenshot", {"format": "gif"})
         check("invalid format -> INVALID_PARAMS", r.get("error", {}).get("code") == "INVALID_PARAMS", r)
+
+        # a non-integer id can't be encoded into the binary header -> rejected
+        ws.send_json({"id": "not-an-int", "method": "screenshot", "params": {}})
+        kind, value = ws.recv_message()
+        check("string id -> INVALID_PARAMS (no binary)",
+              kind == "text" and value.get("id") == "not-an-int"
+              and value.get("error", {}).get("code") == "INVALID_PARAMS", value)
     finally:
         ws.close()
 

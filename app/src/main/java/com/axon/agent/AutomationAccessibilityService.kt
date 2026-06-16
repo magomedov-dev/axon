@@ -165,6 +165,10 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
      * Promote to a foreground service so the system is far less likely to kill it
      * while the controlling app is backgrounded. specialUse type: the FGS exists
      * solely to keep the local WebSocket control channel alive.
+     *
+     * The specialUse FGS *type* is enforced only on API 34+ (paired with the
+     * manifest PROPERTY_SPECIAL_USE_FGS_SUBTYPE). On API 30–33 the type argument is
+     * ignored but startForeground still promotes the service (verified on API 33).
      */
     private fun startForegroundNotification() {
         val manager = getSystemService(NotificationManager::class.java)
@@ -220,10 +224,9 @@ class AutomationAccessibilityService : AccessibilityService(), Agent {
         val e = event ?: return
         val hub = eventHub ?: return
         when (e.eventType) {
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ->
-                hub.onScreenEvent(stateChange = true, e.packageName?.toString(), e.windowId)
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ->
-                hub.onScreenEvent(stateChange = false, e.packageName?.toString(), e.windowId)
+                hub.onScreenEvent(e.packageName?.toString())
             AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED ->
                 hub.onToast(joinText(e.text), e.packageName?.toString())
             // everything else (scroll/focus/selection) is noise — ignore.

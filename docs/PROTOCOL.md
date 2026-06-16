@@ -69,7 +69,10 @@ Three kinds of messages share the one socket:
 { "id": 1, "method": "methodName", "params": { } }
 ```
 
-- `id` — any JSON value; echoed back verbatim. `params` is optional.
+- `id` — echoed back verbatim. It **should be a non-negative integer**; for
+  [`screenshot`](#screenshot-) it **must** be an integer in `[0, 2³²−1]` because it
+  is encoded into the binary-frame header (other ids are rejected with
+  `INVALID_PARAMS`). `params` is optional.
 
 ### Success response
 
@@ -133,6 +136,9 @@ Serialize the UI tree from a fresh `getRootInActiveWindow()`.
     Default: unbounded.
   - `compress` *(bool, optional)* — drop the (recomputable) `center` and any empty
     `children` array to save bandwidth. Default: `false`.
+  - **Recommendation:** on dense screens prefer `compress: true` plus a bounded
+    `maxDepth` as the norm; the unbounded default is the most expensive path
+    (every `getChild()` is an IPC).
 - **result:** the **root node object** (see [node schema](#node-schema)) with two
   extra top-level fields:
   - `screen` *(int)* — screen-state generation (see `screenChanged`).
@@ -219,7 +225,10 @@ action on it. Stateless within the call — the node never outlives the RPC.
 
 - **params:**
   - `by` *(required)* — selector: `resourceId` | `text` | `class` | `contentDesc`.
-  - `value` *(string, required)* — exact value to match.
+  - `value` *(string, required)* — value to match against the selected attribute.
+  - `match` *(optional)* — `exact` (default) | `contains` (substring) | `regex`
+    (Kotlin regex, matches anywhere; anchor with `^`/`$` for a full match). An
+    invalid regex is rejected with `INVALID_PARAMS`.
   - `index` *(int, optional)* — pick the N-th match (0-based) when several match.
   - `action` *(required)* — one of the actions below.
   - `text` *(string)* — **required for** `setText`.
@@ -290,9 +299,11 @@ atomically (nothing interleaves between them).
   `{ "screen": int, "format": string, "width": int, "height": int, "bytes": int }`
 - **message 2 (binary frame):** `[4-byte id, uint32 big-endian][image bytes]`, where
   `id` is the request id and the byte count equals `bytes` from the metadata.
-- **errors:** `INVALID_PARAMS` (bad `format`/`quality`); `INTERNAL` if the capture
-  fails (e.g. the platform rate-limits `takeScreenshot`). On error, no binary frame
-  is sent.
+- **errors:** `INVALID_PARAMS` (bad `format`/`quality`, or a request `id` that is
+  not an integer in `[0, 2³²−1]` — see [Request](#4-request--response-shape));
+  `INTERNAL` if the capture fails. On error, no binary frame is sent.
+- **Rate limit:** `takeScreenshot()` is system-throttled to roughly one capture per
+  second; calling it faster fails with `INTERNAL`. Clients should pace screenshots.
 
 ```json
 → { "id": 7, "method": "screenshot", "params": { "format": "jpeg", "quality": 80 } }
@@ -330,10 +341,13 @@ connections that turned them on with [`setEventStream`](#seteventstream-).
 - Fired only by `TYPE_WINDOW_STATE_CHANGED` / `TYPE_WINDOW_CONTENT_CHANGED`
   (scroll/focus/selection noise is ignored).
 - **Trailing-debounced** (~80 ms): a burst collapses into a single event once the
-  stream goes quiet.
-- **Deduplicated:** `screen` advances (and an event fires) only on a *real* change
-  — a window state change or a new package/window. Pure content churn on the same
-  screen (clocks, tickers) is suppressed.
+  stream goes quiet; an animation that never settles emits nothing until it stops.
+- Every *settled* change — including an in-place content change within the same
+  window (a validation error appearing, a section expanding) — emits one event with
+  a freshly incremented `screen`. This is deliberate: a client waiting for an
+  element on the event stream gets a "something changed, re-check" signal instead of
+  silence, so it need not fall back to polling. `screen` is monotonic; the client
+  confirms the actual change with a `dumpHierarchy`.
 
 ### `toast`
 

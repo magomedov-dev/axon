@@ -4,7 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.longOrNull
 
 /**
  * Parses a raw text frame, routes it to a handler, and renders the reply.
@@ -41,8 +41,17 @@ class JsonRpcDispatcher(private val router: MethodRouter) {
             val json = RpcMessages.success(id, result)
             val binary = ctx.binary
             if (binary != null) {
+                // The id is encoded into the 4-byte binary-frame header, so it must
+                // fit a uint32. Reject anything else with a clear error instead of
+                // silently corrupting the correlation id.
+                val frameId = uint32Id(id)
+                    ?: return RpcMessages.error(
+                        id,
+                        ErrorCodes.INVALID_PARAMS,
+                        "a binary response (screenshot) requires an integer id in [0, 4294967295]"
+                    )
                 // Metadata + binary frame must go out atomically (no interleaving).
-                ctx.connection.writer.sendJsonThenBinary(json, idToLong(id), binary)
+                ctx.connection.writer.sendJsonThenBinary(json, frameId, binary)
                 null
             } else {
                 json
@@ -56,6 +65,14 @@ class JsonRpcDispatcher(private val router: MethodRouter) {
         }
     }
 
-    private fun idToLong(id: JsonElement?): Long =
-        (id as? JsonPrimitive)?.intOrNull?.toLong() ?: 0L
+    /**
+     * The request id as a uint32 for the binary-frame header, or null if it can't
+     * be represented (a string, a non-integer, or out of [0, 2^32-1]).
+     */
+    private fun uint32Id(id: JsonElement?): Long? {
+        val primitive = id as? JsonPrimitive ?: return null
+        if (primitive.isString) return null
+        val value = primitive.longOrNull ?: return null
+        return if (value in 0..0xFFFF_FFFFL) value else null
+    }
 }

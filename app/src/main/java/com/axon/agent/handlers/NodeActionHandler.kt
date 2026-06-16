@@ -31,7 +31,7 @@ object NodeActionHandler : RpcHandler {
         return ctx.agent.tree.on {
             val root = ctx.agent.rootNode()
                 ?: throw RpcException(ErrorCodes.ACCESSIBILITY_DISABLED, "no active window root")
-            val matches = NodeFinder.findAll(root, req.by, req.value)
+            val matches = NodeFinder.findAll(root, req.by, req.value, req.match)
             try {
                 if (matches.isEmpty()) {
                     throw RpcException(ErrorCodes.NODE_NOT_FOUND, "no node matches ${req.by}='${req.value}'")

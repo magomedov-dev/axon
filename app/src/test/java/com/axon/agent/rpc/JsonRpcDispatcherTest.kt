@@ -8,15 +8,19 @@ import com.axon.agent.server.Sender
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
+import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -76,6 +80,29 @@ class JsonRpcDispatcherTest {
         assertEquals(ErrorCodes.INVALID_PARAMS, err["code"]!!.jsonPrimitive.content)
         assertEquals("bad params", err["message"]!!.jsonPrimitive.content)
     }
+
+    @Test
+    fun binaryResponse_withNonIntegerId_isRejected() = runTest {
+        // string id can't be encoded into the uint32 binary-frame header -> error,
+        // and no binary frame is sent.
+        val resp = RpcMessages.json
+            .parseToJsonElement(JsonRpcDispatcher(binaryRouter).dispatch("""{"id":"abc","method":"shot"}""", ctx)!!)
+            .jsonObject
+        assertEquals(ErrorCodes.INVALID_PARAMS, resp["error"]!!.jsonObject["code"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun binaryResponse_withIntegerId_isSentDirectly() = runTest {
+        // valid uint32 id -> handler wrote the reply itself (text + binary) -> null
+        assertNull(JsonRpcDispatcher(binaryRouter).dispatch("""{"id":7,"method":"shot"}""", ctx))
+    }
+
+    private val binaryRouter = MethodRouter(mapOf("shot" to object : RpcHandler {
+        override suspend fun handle(params: JsonObject?, ctx: RpcContext): JsonElement {
+            ctx.binary = byteArrayOf(1, 2, 3)
+            return buildJsonObject { put("ok", true) }
+        }
+    }))
 
     // ---- fakes ------------------------------------------------------------
     private object NoopSender : Sender {
